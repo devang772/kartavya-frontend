@@ -90,9 +90,20 @@ const UsersTable = () => {
     };
 
     const handleSendEmail = async (users) => {
+        const emails = Array.isArray(users) ? users.map(u => u.email).filter(Boolean) : (users?.email ? [users.email] : []);
+
+        if (!emails || emails.length === 0) {
+            toast.current.show({
+                severity: 'warn',
+                summary: 'No Recipient Selected',
+                detail: 'Please select at least one user from the table to send an email.',
+                life: 3000
+            });
+            return;
+        }
+
         setSending(true);
         try {
-            const emails = Array.isArray(users) ? users.map(u => u.email) : [users.email];
             const formData = new FormData();
             formData.append('users', JSON.stringify(emails));
             formData.append('subject', emailData.subject);
@@ -112,15 +123,15 @@ const UsersTable = () => {
             toast.current.show({
                 severity: 'success',
                 summary: 'Success',
-                detail: 'Email sent successfully',
+                detail: `Email sent successfully to ${emails.length} user(s)`,
                 life: 3000
             });
         } catch (error) {
-            console.log(error)
+            console.log(error);
             toast.current.show({
                 severity: 'error',
                 summary: 'Error',
-                detail: 'Failed to send email',
+                detail: error.response?.data?.message || 'Failed to send email',
                 life: 3000
             });
         } finally {
@@ -426,18 +437,26 @@ const UsersTable = () => {
             }
         >
             <div className="email-form">
-                <InputText
+                <input
+                    type="text"
                     placeholder="Subject"
-                    value={emailData.subject}
-                    onChange={(e) => setEmailData(prev => ({ ...prev, subject: e.target.value }))}
-                    className="w-full mb-3"
+                    value={emailData.subject || ''}
+                    onChange={(e) => {
+                        const val = e.target.value;
+                        setEmailData(prev => ({ ...prev, subject: val }));
+                    }}
+                    className="p-inputtext p-component w-full mb-3"
                 />
-                <InputTextarea
+                <textarea
                     placeholder="Message"
-                    value={emailData.message}
-                    onChange={(e) => setEmailData(prev => ({ ...prev, message: e.target.value }))}
+                    value={emailData.message || ''}
+                    onChange={(e) => {
+                        const val = e.target.value;
+                        setEmailData(prev => ({ ...prev, message: val }));
+                    }}
                     rows={5}
-                    className="w-full mb-3"
+                    className="p-inputtext p-component w-full mb-3"
+                    style={{ resize: 'vertical' }}
                 />
                 <div className="mb-3">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
